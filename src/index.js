@@ -35,8 +35,6 @@ http
       // console.log(newFileName);
       fs.rename(`${fileName}`, `${newFileName}`, (err, data) => {
         if (err) {
-          console.log(params);
-          // console.log(req.url);
           res.write('No se ha podido renombrar el archivo.');
           res.end()
           return
