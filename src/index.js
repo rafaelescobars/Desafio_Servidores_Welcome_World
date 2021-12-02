@@ -1,61 +1,85 @@
-//Crear un servidor con node
+//crear un servidor
 const http = require('http');
 
 //crear const url
 const url = require('url');
 
-//importar modulo file system
+//imporfat file system
 const fs = require('fs');
 
-//almacenar en una constante los parametros recibidos en la consulta
-http
-  .createServer((req, res) => {
-    const params = url.parse(req.url, true).query
-    const fileName = params.archivo
-    const fileContent = params.contenido
-    const newFileName = params.nuevoNombre
+//función obtener fecha formato dd-mm-aaaa
+const fechaFormato = (date) => {
+  let dia = date.getDate()
+  let mes = date.getMonth() + 1
+  if (dia < 10) {
+    dia = `0${dia}`
+  }
+  if (mes < 10) {
+    mes = `0${mes}`
+  }
+  return `${dia}/${mes}/${date.getFullYear()}`
+}
 
+http.createServer((req, res) => {
+    const params = url.parse(req.url, true).query
     if (req.url.includes('/crear')) {
-      fs.writeFile(`${fileName}`, fileContent, () => {
-        res.write('Archivo creado con éxito!')
-        res.end()
+      const {
+        archivo,
+        contenido
+      } = params
+      fs.writeFile(archivo, `${fechaFormato(new Date())}\n${contenido}`, 'utf8', (err) => {
+        if (err) {
+          res.write('Error!')
+          res.end()
+        } else {
+          res.write('Archivo creado con éxito')
+          res.end()
+        }
       })
     } else if (req.url.includes('/leer')) {
-      fs.readFile(`${fileName}`, 'utf8', (err, data) => {
+      const {
+        archivo
+      } = params
+      fs.readFile(archivo, (err, data) => {
         if (err) {
-          res.write('No se encuentra o no existe archivo.');
+          res.write('Error!')
           res.end()
-          return
+        } else {
+          res.write(data)
+          res.end()
         }
-        res.write(data)
-        res.end()
       })
     } else if (req.url.includes('/renombrar')) {
-      const fileName = params.nombre
-      // console.log(newFileName);
-      fs.rename(`${fileName}`, `${newFileName}`, (err, data) => {
+      const {
+        nombre,
+        nuevoNombre
+      } = params
+      fs.rename(nombre, nuevoNombre, (err, data) => {
         if (err) {
-          res.write('No se ha podido renombrar el archivo.');
+          res.write('Error!')
           res.end()
-          return
+        } else {
+          res.write(`Archivo ${nombre} renombrado como ${nuevoNombre} con éxito.`)
+          res.end()
         }
-        res.write('Archivo renombrado con éxito.')
-        res.end()
       })
     } else if (req.url.includes('/eliminar')) {
-      fs.unlink(`${fileName}`, (err) => {
+      const {
+        archivo
+      } = params
+      fs.unlink(archivo, (err) => {
         if (err) {
-          res.write('Error. Archivo no eliminado.');
+          res.write('Error!')
           res.end()
-          return
+        } else {
+          res.write(`Tu solicitud para eliminar el archivo ${archivo} se está procesando`)
+          setTimeout(() => {
+            res.write('Archivo eliminado con éxito.', () => {
+              return res.end()
+            })
+          }, 3000);
         }
-        res.write('Archivo eliminado con éxito.')
-        res.end()
       })
     }
-
-
   })
-  .listen(8080, () => {
-    console.log('Escuchando el puerto 8080')
-  })
+  .listen(8080, () => console.log('Escuchando el puerto 8080 '))
